@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FF6B35">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Marketplace Social</title>
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #FF6B35;
+            --primary-dark: #E55A2B;
+            --bg: #F8F9FA;
+            --card-bg: #FFFFFF;
+            --text: #1A1A2E;
+            --text-light: #6B7280;
+            --border: #E5E7EB;
+            --success: #10B981;
+            --danger: #EF4444;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding-bottom: 80px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Header */
+        .header {
+            background: var(--card-bg);
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .header-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .logo {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+        .search-bar {
+            flex: 1;
+            background: var(--bg);
+            border-radius: 24px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--border);
+        }
+        .search-bar input {
+            border: none;
+            background: none;
+            outline: none;
+            font-size: 14px;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+        }
+        .search-bar svg { width: 18px; height: 18px; color: var(--text-light); }
+        .notif-btn {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .notif-badge {
+            position: absolute; top: 8px; right: 8px;
+            width: 8px; height: 8px;
+            background: var(--danger);
+            border-radius: 50%;
+        }
+        /* Categories */
+        .categories {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 4px 0;
+            scrollbar-width: none;
+        }
+        .categories::-webkit-scrollbar { display: none; }
+        .cat-chip {
+            padding: 8px 18px;
+            border-radius: 20px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .cat-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .filter-bar::-webkit-scrollbar { display: none; }
+        .filter-btn {
+            padding: 6px 14px;
+            border-radius: 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        /* Product Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 0 16px 20px;
+        }
+        .product-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .product-card:active { transform: scale(0.98); }
+        .product-img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            position: relative;
+        }
+        .like-btn {
+            position: absolute;
+            top: 8px; right: 8px;
+            width: 32px; height: 32px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: none;
+            backdrop-filter: blur(4px);
+        }
+        .product-info { padding: 10px 12px; }
+        .product-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .product-title {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .product-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+        .seller {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .seller-avatar {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        }
+        .seller-name {
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 11px;
+            color: #F59E0B;
+        }
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0; right: 0;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom, 8px);
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 4px 12px;
+            color: var(--text-light);
+            font-size: 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item svg { width: 24px; height: 24px; }
+        .sell-btn {
+            background: var(--primary);
+            color: white !important;
+            border-radius: 16px;
+            padding: 8px 20px !important;
+            margin-top: -20px;
+            box-shadow: 0 4px 12px rgba(255,107,53,0.4);
+        }
+        /* Stories */
+        .stories-container {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            background: var(--card-bg);
+            margin-bottom: 8px;
+        }
+        .stories-container::-webkit-scrollbar { display: none; }
+        .story {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+        .story-ring {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            padding: 3px;
+            background: linear-gradient(45deg, var(--primary), #F59E0B, #EC4899);
+        }
+        .story-img {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+        }
+        .story-name {
+            font-size: 11px;
+            color: var(--text-light);
+            max-width: 64px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .add-story {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            border: 2px dashed var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-top">
+            <div class="logo">Vendy</div>
+            <div class="search-bar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" placeholder="Rechercher un produit...">
+            </div>
+            <button class="notif-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="notif-badge"></span>
+            </button>
+        </div>
+        <div class="categories">
+            <div class="cat-chip active">Tout</div>
+            <div class="cat-chip">Mode</div>
+            <div class="cat-chip">Tech</div>
+            <div class="cat-chip">Maison</div>
+            <div class="cat-chip">Sport</div>
+            <div class="cat-chip">Livres</div>
+            <div class="cat-chip">Jeux</div>
+            <div class="cat-chip">Auto</div>
+        </div>
+    </div>
+
+    <!-- Stories -->
+    <div class="stories-container">
+        <div class="story">
+            <div class="add-story">+</div>
+            <span class="story-name">Ajouter</span>
+        </div>
+        <div class="story">
+            <div class="story-ring"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" class="story-img" alt="Marie"></div>
+            <span class="story-name">Marie</span>
+        </div>
+        <div class="story">
+            <div class="story-ring"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" class="story-img" alt="Lucas"></div>
+            <span class="story-name">Lucas</span>
+        </div>
+        <div class="story">
+            <div class="story-ring"><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" class="story-img" alt="Sophie"></div>
+            <span class="story-name">Sophie</span>
+        </div>
+        <div class="story">
+            <div class="story-ring"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop" class="story-img" alt="Tom"></div>
+            <span class="story-name">Tom</span>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+        <div class="filter-btn">📍 Paris</div>
+        <div class="filter-btn">💶 Prix</div>
+        <div class="filter-btn">⭐ État</div>
+        <div class="filter-btn">📅 Récent</div>
+        <div class="filter-btn">🚚 Livraison</div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="products-grid" id="products">
+        <!-- Products injected by JS -->
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Accueil
+        </button>
+        <button class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            Explorer
+        </button>
+        <button class="nav-item sell-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Vendre
+        </button>
+        <button class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            Messages
+        </button>
+        <button class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Profil
+        </button>
+    </nav>
+
+    <script>
+        // Sample products data
+        const products = [
+            { id: 1, title: "iPhone 14 Pro - 256Go", price: 899, seller: "TechLucas", rating: 4.8, img: "https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=400&h=400&fit=crop" },
+            { id: 2, title: "Veste en cuir vintage", price: 45, seller: "MarieMode", rating: 4.9, img: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=400&fit=crop" },
+            { id: 3, title: "PS5 + 2 manettes", price: 420, seller: "GameTom", rating: 4.7, img: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400&h=400&fit=crop" },
+            { id: 4, title: "Table basse scandinave", price: 75, seller: "SophieHome", rating: 4.6, img: "https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?w=400&h=400&fit=crop" },
+            { id: 5, title: "Nike Air Force 1", price: 85, seller: "SneakMax", rating: 4.9, img: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&h=400&fit=crop" },
+            { id: 6, title: "MacBook Air M2", price: 1150, seller: "AppleAddict", rating: 5.0, img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop" },
+            { id: 7, title: "Vélo de ville Peugeot", price: 120, seller: "CycleSophie", rating: 4.5, img: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400&h=400&fit=crop" },
+            { id: 8, title: "Appareil photo Canon EOS", price: 350, seller: "PhotoLucas", rating: 4.8, img: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=400&fit=crop" }
+        ];
+
+        function renderProducts() {
+            const grid = document.getElementById('products');
+            grid.innerHTML = products.map(p => `
+                <div class="product-card" onclick="openProduct(${p.id})">
+                    <div style="position:relative">
+                        <img src="${p.img}" class="product-img" alt="${p.title}">
+                        <button class="like-btn" onclick="event.stopPropagation(); toggleLike(this)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-price">${p.price} €</div>
+                        <div class="product-title">${p.title}</div>
+                        <div class="product-meta">
+                            <div class="seller">
+                                <div class="seller-avatar"></div>
+                                <span class="seller-name">${p.seller}</span>
+                            </div>
+                            <div class="rating">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                ${p.rating}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleLike(btn) {
+            const svg = btn.querySelector('svg');
+            const isLiked = svg.getAttribute('fill') === '#EF4444';
+            svg.setAttribute('fill', isLiked ? 'none' : '#EF4444');
+        }
+
+        function openProduct(id) {
+            // Will navigate to product detail page
+            console.log('Open product', id);
+        }
+
+        // Category filter
+        document.querySelectorAll('.cat-chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        renderProducts();
+    </script>
+</body>
+</html>

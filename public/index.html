@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FF6B35">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Vendy - Marketplace Social</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #FF6B35;
+            --primary-dark: #E55A2B;
+            --bg: #F8F9FA;
+            --card-bg: #FFFFFF;
+            --text: #1A1A2E;
+            --text-light: #6B7280;
+            --border: #E5E7EB;
+            --success: #10B981;
+            --danger: #EF4444;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        /* ====== PAGES ====== */
+        .page {
+            display: none;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        .page.active { display: block; }
+
+        /* ====== HEADER ====== */
+        .header {
+            background: var(--card-bg);
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .header-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .logo {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+        .search-bar {
+            flex: 1;
+            background: var(--bg);
+            border-radius: 24px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--border);
+        }
+        .search-bar input {
+            border: none;
+            background: none;
+            outline: none;
+            font-size: 14px;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+        }
+        .search-bar svg { width: 18px; height: 18px; color: var(--text-light); flex-shrink: 0; }
+        .notif-btn {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .notif-badge {
+            position: absolute; top: 8px; right: 8px;
+            width: 8px; height: 8px;
+            background: var(--danger);
+            border-radius: 50%;
+        }
+
+        /* ====== CATEGORIES ====== */
+        .categories {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 4px 0;
+            scrollbar-width: none;
+        }
+        .categories::-webkit-scrollbar { display: none; }
+        .cat-chip {
+            padding: 8px 18px;
+            border-radius: 20px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .cat-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* ====== STORIES ====== */
+        .stories-container {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            background: var(--card-bg);
+            margin-bottom: 8px;
+        }
+        .stories-container::-webkit-scrollbar { display: none; }
+        .story {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .story-ring {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            padding: 3px;
+            background: linear-gradient(45deg, var(--primary), #F59E0B, #EC4899);
+        }
+        .story-img {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+        }
+        .story-name {
+            font-size: 11px;
+            color: var(--text-light);
+            max-width: 64px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .add-story {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            border: 2px dashed var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 24px;
+            background: var(--bg);
+        }
+
+        /* ====== FILTER BAR ====== */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .filter-bar::-webkit-scrollbar { display: none; }
+        .filter-btn {
+            padding: 6px 14px;
+            border-radius: 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .filter-btn:active { background: var(--bg); }
+
+        /* ====== PRODUCTS GRID ====== */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 0 16px 20px;
+        }
+        .product-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .product-card:active { transform: scale(0.97); }
+        .product-img-wrap { position: relative; }
+        .product-img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            display: block;
+        }
+        .like-btn {
+            position: absolute;
+            top: 8px; right: 8px;
+            width: 32px; height: 32px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: none;
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .like-btn:active { transform: scale(1.2); }
+        .product-info { padding: 10px 12px; }
+        .product-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .product-title {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .product-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+        .seller {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .seller-avatar {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .seller-avatar-placeholder {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            flex-shrink: 0;
+        }
+        .seller-name {
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 11px;
+            color: #F59E0B;
+        }
+
+        /* ====== BOTTOM NAV ====== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0; right: 0;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            padding: 8px 0;
+            z-index: 200;
+            padding-bottom: env(safe-area-inset-bottom, 8px);
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 4px 12px;
+            color: var(--text-light);
+            font-size: 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item svg { width: 24px; height: 24px; }
+        .sell-fab {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 8px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 10px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            margin-top: -20px;
+            box-shadow: 0 4px 12px rgba(255,107,53,0.4);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .sell-fab:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(255,107,53,0.3); }
+        .sell-fab svg { width: 24px; height: 24px; }
+
+        /* ====== PRODUCT DETAIL PAGE ====== */
+        .detail-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+        }
+        .back-btn {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        .detail-title { font-size: 16px; font-weight: 600; }
+        .share-btn {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        .detail-img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            display: block;
+        }
+        .detail-body { padding: 16px; }
+        .detail-price {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .detail-product-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+        .detail-badges {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-state {
+            background: #ECFDF5;
+            color: var(--success);
+        }
+        .badge-location {
+            background: #EFF6FF;
+            color: #3B82F6;
+        }
+        .badge-category {
+            background: #FFF7ED;
+            color: var(--primary);
+        }
+        .detail-desc {
+            margin-top: 16px;
+            font-size: 14px;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 16px 0;
+        }
+        .seller-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .seller-card-avatar {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .seller-card-avatar-placeholder {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .seller-card-info { flex: 1; }
+        .seller-card-name { font-size: 15px; font-weight: 600; }
+        .seller-card-meta { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+        .seller-card-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: #F59E0B;
+            font-weight: 600;
+        }
+        .detail-actions {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: var(--card-bg);
+            padding: 12px 16px;
+            padding-bottom: env(safe-area-inset-bottom, 12px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+        }
+        .btn-message {
+            flex: 1;
+            padding: 14px;
+            border-radius: 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            color: var(--text);
+            transition: background 0.15s;
+        }
+        .btn-message:active { background: var(--border); }
+        .btn-buy {
+            flex: 2;
+            padding: 14px;
+            border-radius: 14px;
+            background: var(--primary);
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            color: white;
+            box-shadow: 0 4px 12px rgba(255,107,53,0.3);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .btn-buy:active { transform: scale(0.98); box-shadow: 0 2px 6px rgba(255,107,53,0.2); }
+
+        /* ====== SELL PAGE ====== */
+        .sell-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .sell-header-title { font-size: 18px; font-weight: 700; }
+        .sell-form { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+        .photo-upload {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            background: var(--card-bg);
+            color: var(--text-light);
+            transition: border-color 0.2s;
+        }
+        .photo-upload:hover { border-color: var(--primary); color: var(--primary); }
+        .photo-upload svg { width: 40px; height: 40px; }
+        .photo-upload-text { font-size: 14px; font-weight: 500; }
+        .photo-upload-sub { font-size: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-label { font-size: 13px; font-weight: 600; color: var(--text); }
+        .form-input, .form-textarea, .form-select {
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            border-color: var(--primary);
+        }
+        .form-textarea { resize: none; height: 100px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .btn-publish {
+            padding: 16px;
+            border-radius: 14px;
+            background: var(--primary);
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            color: white;
+            box-shadow: 0 4px 12px rgba(255,107,53,0.3);
+            margin-top: 8px;
+        }
+
+        /* ====== MESSAGES PAGE ====== */
+        .messages-header {
+            padding: 16px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .messages-header-title { font-size: 20px; font-weight: 700; }
+        .messages-list { padding: 8px 0; }
+        .message-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .message-item:active { background: var(--bg); }
+        .message-avatar {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .message-avatar-placeholder {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .message-info { flex: 1; min-width: 0; }
+        .message-name { font-size: 15px; font-weight: 600; }
+        .message-preview {
+            font-size: 13px;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+        .message-product-thumb {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .message-time { font-size: 11px; color: var(--text-light); margin-bottom: auto; }
+        .message-unread {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            flex-shrink: 0;
+        }
+
+        /* ====== PROFILE PAGE ====== */
+        .profile-header {
+            background: var(--card-bg);
+            padding: 24px 16px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .profile-top {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .profile-avatar-wrap { position: relative; }
+        .profile-avatar {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 32px;
+        }
+        .profile-edit-badge {
+            position: absolute; bottom: 0; right: 0;
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid white;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .profile-name { font-size: 20px; font-weight: 700; }
+        .profile-handle { font-size: 14px; color: var(--text-light); margin-top: 2px; }
+        .profile-bio { font-size: 14px; color: var(--text-light); margin-top: 8px; }
+        .profile-stats {
+            display: flex;
+            gap: 0;
+            margin-top: 20px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .stat-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            border-right: 1px solid var(--border);
+        }
+        .stat-item:last-child { border-right: none; }
+        .stat-value { font-size: 18px; font-weight: 700; }
+        .stat-label { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+        .profile-tabs {
+            display: flex;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .profile-tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-light);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .profile-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            padding: 2px;
+        }
+        .profile-product-thumb {
+            aspect-ratio: 1;
+            object-fit: cover;
+            width: 100%;
+            display: block;
+            cursor: pointer;
+        }
+
+        /* ====== EXPLORE PAGE ====== */
+        .explore-header {
+            background: var(--card-bg);
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+        .explore-search {
+            background: var(--bg);
+            border-radius: 24px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--border);
+        }
+        .explore-search input {
+            border: none; background: none; outline: none;
+            font-size: 14px; width: 100%; font-family: 'Inter', sans-serif;
+        }
+        .explore-masonry {
+            columns: 2;
+            gap: 8px;
+            padding: 8px;
+        }
+        .explore-card {
+            break-inside: avoid;
+            margin-bottom: 8px;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            background: var(--card-bg);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .explore-card img { width: 100%; display: block; }
+        .explore-card-info { padding: 8px 10px; }
+        .explore-card-price { font-size: 14px; font-weight: 700; }
+        .explore-card-title { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+
+        /* ====== TOAST ====== */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #1A1A2E;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 999;
+            white-space: nowrap;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ====== STORY OVERLAY ====== */
+        .story-overlay {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 500;
+            display: none;
+            flex-direction: column;
+        }
+        .story-overlay.open { display: flex; }
+        .story-progress-bar {
+            display: flex;
+            gap: 4px;
+            padding: 12px 12px 0;
+        }
+        .story-progress-segment {
+            flex: 1;
+            height: 3px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .story-progress-fill {
+            height: 100%;
+            background: white;
+            width: 0%;
+            transition: width linear;
+        }
+        .story-overlay-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+        }
+        .story-user-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+        }
+        .story-user-name { color: white; font-weight: 600; font-size: 14px; }
+        .story-time { color: rgba(255,255,255,0.7); font-size: 12px; }
+        .story-close {
+            margin-left: auto;
+            background: none; border: none; cursor: pointer;
+            color: white;
+        }
+        .story-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .story-content img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .story-product-card {
+            position: absolute;
+            bottom: 40px;
+            left: 16px; right: 16px;
+            background: white;
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+        .story-product-card img {
+            width: 56px; height: 56px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+        .story-product-info { flex: 1; }
+        .story-product-price { font-size: 16px; font-weight: 700; color: var(--text); }
+        .story-product-title { font-size: 13px; color: var(--text-light); margin-top: 2px; }
+        .story-product-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== HOME PAGE ===== -->
+<div class="page active" id="page-home">
+    <div class="header">
+        <div class="header-top">
+            <div class="logo">Vendy</div>
+            <div class="search-bar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" placeholder="Rechercher un produit..." id="search-input">
+            </div>
+            <button class="notif-btn" onclick="showToast('3 nouvelles notifications')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="notif-badge"></span>
+            </button>
+        </div>
+        <div class="categories" id="categories">
+            <div class="cat-chip active" data-cat="all">Tout</div>
+            <div class="cat-chip" data-cat="Mode">Mode</div>
+            <div class="cat-chip" data-cat="Tech">Tech</div>
+            <div class="cat-chip" data-cat="Maison">Maison</div>
+            <div class="cat-chip" data-cat="Sport">Sport</div>
+            <div class="cat-chip" data-cat="Livres">Livres</div>
+            <div class="cat-chip" data-cat="Jeux">Jeux</div>
+            <div class="cat-chip" data-cat="Auto">Auto</div>
+        </div>
+    </div>
+
+    <!-- Stories -->
+    <div class="stories-container" id="stories-container"></div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+        <div class="filter-btn">📍 Paris</div>
+        <div class="filter-btn">💶 Prix</div>
+        <div class="filter-btn">⭐ État</div>
+        <div class="filter-btn">📅 Récent</div>
+        <div class="filter-btn">🚚 Livraison</div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="products-grid" id="products"></div>
+</div>
+
+<!-- ===== EXPLORE PAGE ===== -->
+<div class="page" id="page-explore">
+    <div class="explore-header">
+        <div class="explore-search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" placeholder="Explorer des articles...">
+        </div>
+    </div>
+    <div class="explore-masonry" id="explore-grid"></div>
+</div>
+
+<!-- ===== SELL PAGE ===== -->
+<div class="page" id="page-sell">
+    <div class="sell-header">
+        <div class="sell-header-title">Vendre un article</div>
+        <button style="background:none;border:none;color:var(--text-light);cursor:pointer;font-size:13px;" onclick="showToast('Brouillon sauvegardé')">Brouillon</button>
+    </div>
+    <div class="sell-form">
+        <div class="photo-upload" onclick="showToast('Sélection de photos...')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <div class="photo-upload-text">Ajouter des photos</div>
+            <div class="photo-upload-sub">Jusqu'à 8 photos</div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Titre de l'annonce</label>
+            <input type="text" class="form-input" placeholder="Ex: iPhone 14 Pro 256Go Noir">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-textarea" placeholder="Décrivez votre article..."></textarea>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Prix (€)</label>
+                <input type="number" class="form-input" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">État</label>
+                <select class="form-select">
+                    <option>Neuf</option>
+                    <option>Très bon</option>
+                    <option>Bon</option>
+                    <option>Correct</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Catégorie</label>
+            <select class="form-select">
+                <option>Tech</option>
+                <option>Mode</option>
+                <option>Maison</option>
+                <option>Sport</option>
+                <option>Livres</option>
+                <option>Jeux</option>
+                <option>Auto</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Localisation</label>
+            <input type="text" class="form-input" placeholder="Paris, France">
+        </div>
+        <button class="btn-publish" onclick="showToast('✅ Annonce publiée avec succès !')">Publier l'annonce</button>
+    </div>
+</div>
+
+<!-- ===== MESSAGES PAGE ===== -->
+<div class="page" id="page-messages">
+    <div class="messages-header">
+        <div class="messages-header-title">Messages</div>
+    </div>
+    <div class="messages-list" id="messages-list"></div>
+</div>
+
+<!-- ===== PROFILE PAGE ===== -->
+<div class="page" id="page-profile">
+    <div class="profile-header">
+        <div class="profile-top">
+            <div class="profile-avatar-wrap">
+                <div class="profile-avatar">A</div>
+                <div class="profile-edit-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </div>
+            </div>
+            <div>
+                <div class="profile-name">Alice Martin</div>
+                <div class="profile-handle">@alice.martin</div>
+            </div>
+            <button onclick="showToast('Modifier le profil')" style="margin-left:auto;padding:8px 16px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">Modifier</button>
+        </div>
+        <div class="profile-bio">Passionnée de mode vintage et tech 📱👗 Paris 📍</div>
+        <div class="profile-stats">
+            <div class="stat-item">
+                <div class="stat-value">24</div>
+                <div class="stat-label">Ventes</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">142</div>
+                <div class="stat-label">Abonnés</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">4.9★</div>
+                <div class="stat-label">Note</div>
+            </div>
+        </div>
+    </div>
+    <div class="profile-tabs">
+        <div class="profile-tab active" onclick="switchProfileTab(this, 'ventes')">En vente</div>
+        <div class="profile-tab" onclick="switchProfileTab(this, 'achats')">Achats</div>
+        <div class="profile-tab" onclick="switchProfileTab(this, 'favoris')">Favoris</div>
+    </div>
+    <div class="profile-grid" id="profile-grid"></div>
+</div>
+
+<!-- ===== PRODUCT DETAIL PAGE ===== -->
+<div class="page" id="page-detail">
+    <div class="detail-header">
+        <button class="back-btn" onclick="goBack()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        </button>
+        <span class="detail-title">Détail</span>
+        <button class="share-btn" onclick="showToast('Lien copié !')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+    </div>
+    <img id="detail-img" src="" alt="" class="detail-img">
+    <div class="detail-body">
+        <div class="detail-price" id="detail-price"></div>
+        <div class="detail-product-title" id="detail-product-title"></div>
+        <div class="detail-badges" id="detail-badges"></div>
+        <div class="detail-desc" id="detail-desc"></div>
+        <div class="divider"></div>
+        <div class="seller-card" id="detail-seller"></div>
+    </div>
+    <div style="height: 90px;"></div>
+    <div class="detail-actions">
+        <button class="btn-message" onclick="navigateTo('messages')">💬 Message</button>
+        <button class="btn-buy" onclick="showToast('🛒 Article ajouté au panier !')">Acheter • <span id="detail-buy-price"></span> €</button>
+    </div>
+</div>
+
+<!-- ===== BOTTOM NAV ===== -->
+<nav class="bottom-nav" id="bottom-nav">
+    <button class="nav-item active" onclick="navigateTo('home')" data-page="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Accueil
+    </button>
+    <button class="nav-item" onclick="navigateTo('explore')" data-page="explore">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        Explorer
+    </button>
+    <button class="sell-fab" onclick="navigateTo('sell')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Vendre
+    </button>
+    <button class="nav-item" onclick="navigateTo('messages')" data-page="messages">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        Messages
+    </button>
+    <button class="nav-item" onclick="navigateTo('profile')" data-page="profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profil
+    </button>
+</nav>
+
+<!-- ===== STORY OVERLAY ===== -->
+<div class="story-overlay" id="story-overlay">
+    <div class="story-progress-bar" id="story-progress"></div>
+    <div class="story-overlay-header">
+        <img class="story-user-avatar" id="story-avatar" src="" alt="">
+        <div>
+            <div class="story-user-name" id="story-username"></div>
+            <div class="story-time">Il y a 2h</div>
+        </div>
+        <button class="story-close" onclick="closeStory()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+    <div class="story-content">
+        <img id="story-img" src="" alt="">
+        <div class="story-product-card" id="story-product-card">
+            <img id="story-product-img" src="" alt="">
+            <div class="story-product-info">
+                <div class="story-product-price" id="story-product-price"></div>
+                <div class="story-product-title" id="story-product-title"></div>
+            </div>
+            <button class="story-product-btn" onclick="openFromStory()">Voir</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA =====
+const products = [
+    { id: 1, title: "iPhone 14 Pro – 256Go", price: 899, seller: "TechLucas", rating: 4.8, category: "Tech", state: "Très bon état", location: "Paris", img: "https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=600&h=600&fit=crop", sellerImg: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop", desc: "iPhone 14 Pro en excellent état, peu utilisé. Batterie à 94%. Vendu avec boîte originale, chargeur et câble. Aucune rayure visible." },
+    { id: 2, title: "Veste en cuir vintage", price: 45, seller: "MarieMode", rating: 4.9, category: "Mode", state: "Bon état", location: "Lyon", img: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&h=600&fit=crop", sellerImg: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop", desc: "Belle veste en cuir vintage des années 90. Taille M. Quelques légères marques d'usure qui font son charme. Livraison possible." },
+    { id: 3, title: "PS5 + 2 manettes", price: 420, seller: "GameTom", rating: 4.7, category: "Jeux", state: "Très bon état", location: "Marseille", img: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=600&h=600&fit=crop", sellerImg: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop", desc: "PS5 avec 2 manettes DualSense. Achetée en 2022, fonctionne parfaitement. Vendue suite à changement de console. Pack complet." },
+    { id: 4, title: "Table basse scandinave", price: 75, seller: "SophieHome", rating: 4.6, category: "Maison", state: "Bon état", location: "Bordeaux", img: "https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?w=600&h=600&fit=crop", sellerImg: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop", desc: "Jolie table basse style scandinave en bois clair. Dimensions : 120x60x45cm. Légères marques d'utilisation sur le plateau. Remise en main propre uniquement." },
+    { id: 5, title: "Nike Air Force 1", price: 85, seller: "SneakMax", rating: 4.9, category: "Sport", state: "Neuf", location: "Paris", img: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600&h=600&fit=crop", sellerImg: null, desc: "Nike Air Force 1 taille 42. Jamais portées, encore dans la boîte. Coloris blanc classique. Achetées en boutique officielle Nike." },
+    { id: 6, title: "MacBook Air M2", price: 1150, seller: "AppleAddict", rating: 5.0, category: "Tech", state: "Très bon état", location: "Paris", img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&h=600&fit=crop", sellerImg: null, desc: "MacBook Air M2 13 pouces, 8Go RAM, 256Go SSD. Acheté il y a 6 mois, en parfait état. Batterie à 98%. Vendu avec chargeur MagSafe." },
+    { id: 7, title: "Vélo de ville Peugeot", price: 120, seller: "CycleSophie", rating: 4.5, category: "Sport", state: "Bon état", location: "Nantes", img: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600&h=600&fit=crop", sellerImg: null, desc: "Vélo de ville Peugeot 7 vitesses. Cadre aluminium, freins hydrauliques. Utilisé quotidiennement pendant 2 ans. Révisé récemment." },
+    { id: 8, title: "Appareil photo Canon EOS", price: 350, seller: "PhotoLucas", rating: 4.8, category: "Tech", state: "Bon état", location: "Toulouse", img: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&h=600&fit=crop", sellerImg: null, desc: "Canon EOS 90D avec objectif 18-135mm. Environ 15 000 déclenchements. Toutes les fonctions opérationnelles. Vendu avec 2 batteries et chargeur." }
+];
+
+const stories = [
+    { name: "Marie", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop", storyImg: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&h=900&fit=crop", product: products[1] },
+    { name: "Lucas", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop", storyImg: "https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=600&h=900&fit=crop", product: products[0] },
+    { name: "Sophie", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop", storyImg: "https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?w=600&h=900&fit=crop", product: products[3] },
+    { name: "Tom", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop", storyImg: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=600&h=900&fit=crop", product: products[2] },
+];
+
+const conversations = [
+    { id: 1, name: "TechLucas", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop", preview: "C'est toujours dispo ?", productImg: products[0].img, unread: true },
+    { id: 2, name: "MarieMode", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop", preview: "Ok parfait, je prends !", productImg: products[1].img, unread: false },
+    { id: 3, name: "GameTom", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop", preview: "Tu peux faire 400 ?", productImg: products[2].img, unread: true },
+    { id: 4, name: "SophieHome", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop", preview: "Merci, super vente 🙏", productImg: products[3].img, unread: false },
+];
+
+// ===== STATE =====
+let currentPage = 'home';
+let previousPage = 'home';
+let likedProducts = new Set();
+let activeStoryIndex = 0;
+let storyTimer = null;
+
+// ===== NAVIGATION =====
+function navigateTo(page) {
+    if (page === currentPage) return;
+    previousPage = currentPage;
+    currentPage = page;
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+
+    document.querySelectorAll('[data-page]').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.querySelector(`[data-page="${page}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    const nav = document.getElementById('bottom-nav');
+    nav.style.display = (page === 'detail') ? 'none' : 'flex';
+
+    window.scrollTo(0, 0);
+}
+
+function goBack() {
+    navigateTo(previousPage === 'detail' ? 'home' : previousPage);
+}
+
+// ===== RENDER HOME =====
+function renderStories() {
+    const container = document.getElementById('stories-container');
+    container.innerHTML = `
+        <div class="story">
+            <div class="add-story">+</div>
+            <span class="story-name">Ajouter</span>
+        </div>
+    ` + stories.map((s, i) => `
+        <div class="story" onclick="openStory(${i})">
+            <div class="story-ring"><img src="${s.img}" class="story-img" alt="${s.name}"></div>
+            <span class="story-name">${s.name}</span>
+        </div>
+    `).join('');
+}
+
+function renderProducts(filter = 'all') {
+    const grid = document.getElementById('products');
+    const filtered = filter === 'all' ? products : products.filter(p => p.category === filter);
+    grid.innerHTML = filtered.map(p => `
+        <div class="product-card" onclick="openProduct(${p.id})">
+            <div class="product-img-wrap">
+                <img src="${p.img}" class="product-img" alt="${p.title}" loading="lazy">
+                <button class="like-btn" onclick="event.stopPropagation(); toggleLike(this, ${p.id})" aria-label="Favori">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${likedProducts.has(p.id) ? '#EF4444' : 'none'}" stroke="#EF4444" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+            </div>
+            <div class="product-info">
+                <div class="product-price">${p.price} €</div>
+                <div class="product-title">${p.title}</div>
+                <div class="product-meta">
+                    <div class="seller">
+                        ${p.sellerImg
+                            ? `<img src="${p.sellerImg}" class="seller-avatar" alt="${p.seller}">`
+                            : `<div class="seller-avatar-placeholder"></div>`}
+                        <span class="seller-name">${p.seller}</span>
+                    </div>
+                    <div class="rating">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        ${p.rating}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ===== CATEGORY FILTER =====
+document.getElementById('categories').addEventListener('click', function(e) {
+    const chip = e.target.closest('.cat-chip');
+    if (!chip) return;
+    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    renderProducts(chip.dataset.cat);
+});
+
+// ===== SEARCH =====
+document.getElementById('search-input').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    const filtered = q ? products.filter(p =>
+        p.title.toLowerCase().includes(q) || p.seller.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
+    ) : products;
+    const grid = document.getElementById('products');
+    grid.innerHTML = filtered.map(p => `
+        <div class="product-card" onclick="openProduct(${p.id})">
+            <div class="product-img-wrap">
+                <img src="${p.img}" class="product-img" alt="${p.title}" loading="lazy">
+                <button class="like-btn" onclick="event.stopPropagation(); toggleLike(this, ${p.id})">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${likedProducts.has(p.id) ? '#EF4444' : 'none'}" stroke="#EF4444" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+            </div>
+            <div class="product-info">
+                <div class="product-price">${p.price} €</div>
+                <div class="product-title">${p.title}</div>
+                <div class="product-meta">
+                    <div class="seller">
+                        ${p.sellerImg ? `<img src="${p.sellerImg}" class="seller-avatar" alt="">` : `<div class="seller-avatar-placeholder"></div>`}
+                        <span class="seller-name">${p.seller}</span>
+                    </div>
+                    <div class="rating">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        ${p.rating}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('') || '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-light);">Aucun résultat pour « ' + q + ' »</div>';
+});
+
+// ===== LIKE =====
+function toggleLike(btn, id) {
+    if (likedProducts.has(id)) {
+        likedProducts.delete(id);
+        btn.querySelector('svg').setAttribute('fill', 'none');
+        showToast('Retiré des favoris');
+    } else {
+        likedProducts.add(id);
+        btn.querySelector('svg').setAttribute('fill', '#EF4444');
+        showToast('❤️ Ajouté aux favoris !');
+    }
+}
+
+// ===== PRODUCT DETAIL =====
+function openProduct(id) {
+    const p = products.find(p => p.id === id);
+    if (!p) return;
+
+    document.getElementById('detail-img').src = p.img;
+    document.getElementById('detail-img').alt = p.title;
+    document.getElementById('detail-price').textContent = p.price + ' €';
+    document.getElementById('detail-product-title').textContent = p.title;
+    document.getElementById('detail-buy-price').textContent = p.price;
+
+    document.getElementById('detail-badges').innerHTML = `
+        <span class="badge badge-state">${p.state}</span>
+        <span class="badge badge-location">📍 ${p.location}</span>
+        <span class="badge badge-category">${p.category}</span>
+    `;
+
+    document.getElementById('detail-desc').textContent = p.desc;
+
+    document.getElementById('detail-seller').innerHTML = `
+        ${p.sellerImg
+            ? `<img src="${p.sellerImg}" class="seller-card-avatar" alt="${p.seller}">`
+            : `<div class="seller-card-avatar-placeholder">${p.seller[0]}</div>`}
+        <div class="seller-card-info">
+            <div class="seller-card-name">${p.seller}</div>
+            <div class="seller-card-meta">Vendeur vérifié • 24 ventes</div>
+        </div>
+        <div class="seller-card-rating">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            ${p.rating}
+        </div>
+    `;
+
+    navigateTo('detail');
+}
+
+// ===== STORIES =====
+function openStory(index) {
+    activeStoryIndex = index;
+    renderStoryOverlay();
+    document.getElementById('story-overlay').classList.add('open');
+    startStoryTimer();
+}
+
+function renderStoryOverlay() {
+    const s = stories[activeStoryIndex];
+    document.getElementById('story-avatar').src = s.img;
+    document.getElementById('story-username').textContent = s.name;
+    document.getElementById('story-img').src = s.storyImg;
+    document.getElementById('story-product-img').src = s.product.img;
+    document.getElementById('story-product-price').textContent = s.product.price + ' €';
+    document.getElementById('story-product-title').textContent = s.product.title;
+
+    const prog = document.getElementById('story-progress');
+    prog.innerHTML = stories.map((_, i) => `
+        <div class="story-progress-segment">
+            <div class="story-progress-fill" id="seg-${i}" style="width:${i < activeStoryIndex ? '100%' : '0%'}"></div>
+        </div>
+    `).join('');
+}
+
+function startStoryTimer() {
+    clearInterval(storyTimer);
+    const seg = document.getElementById('seg-' + activeStoryIndex);
+    if (!seg) return;
+    seg.style.transition = 'width 5s linear';
+    seg.style.width = '100%';
+    storyTimer = setTimeout(() => {
+        if (activeStoryIndex < stories.length - 1) {
+            activeStoryIndex++;
+            renderStoryOverlay();
+            startStoryTimer();
+        } else {
+            closeStory();
+        }
+    }, 5000);
+}
+
+function closeStory() {
+    clearTimeout(storyTimer);
+    document.getElementById('story-overlay').classList.remove('open');
+}
+
+let storyOpenProduct = null;
+function openFromStory() {
+    closeStory();
+    openProduct(stories[activeStoryIndex]?.product?.id || 1);
+}
+
+// ===== EXPLORE PAGE =====
+function renderExplore() {
+    const grid = document.getElementById('explore-grid');
+    const shuffled = [...products].sort(() => Math.random() - 0.5);
+    grid.innerHTML = shuffled.map(p => `
+        <div class="explore-card" onclick="openProduct(${p.id})">
+            <img src="${p.img}" alt="${p.title}" loading="lazy" style="aspect-ratio:${Math.random() > 0.5 ? '1' : '3/4'}">
+            <div class="explore-card-info">
+                <div class="explore-card-price">${p.price} €</div>
+                <div class="explore-card-title">${p.title}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ===== MESSAGES PAGE =====
+function renderMessages() {
+    const list = document.getElementById('messages-list');
+    list.innerHTML = conversations.map(c => `
+        <div class="message-item" onclick="showToast('Conversation avec ${c.name}')">
+            <img class="message-avatar" src="${c.avatar}" alt="${c.name}">
+            <div class="message-info">
+                <div class="message-name">${c.name}</div>
+                <div class="message-preview">${c.preview}</div>
+            </div>
+            <img class="message-product-thumb" src="${c.productImg}" alt="">
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                <span class="message-time">12:45</span>
+                ${c.unread ? '<div class="message-unread"></div>' : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+// ===== PROFILE PAGE =====
+function renderProfile() {
+    const grid = document.getElementById('profile-grid');
+    grid.innerHTML = products.slice(0, 6).map(p => `
+        <img class="profile-product-thumb" src="${p.img}" alt="${p.title}" loading="lazy" onclick="openProduct(${p.id})">
+    `).join('');
+}
+
+function switchProfileTab(el, tab) {
+    document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    const grid = document.getElementById('profile-grid');
+    if (tab === 'favoris') {
+        const favs = products.filter(p => likedProducts.has(p.id));
+        if (favs.length === 0) {
+            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-light);">Aucun favori pour l\'instant</div>';
+        } else {
+            grid.innerHTML = favs.map(p => `<img class="profile-product-thumb" src="${p.img}" alt="${p.title}" onclick="openProduct(${p.id})">`).join('');
+        }
+    } else {
+        renderProfile();
+    }
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== INIT =====
+renderStories();
+renderProducts();
+renderExplore();
+renderMessages();
+renderProfile();
+</script>
+</body>
+</html>
