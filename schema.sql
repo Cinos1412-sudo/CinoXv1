@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
   phone_orange VARCHAR(20) DEFAULT '',
   phone_airtel VARCHAR(20) DEFAULT '',
   is_verified BOOLEAN DEFAULT false,
+  email_verified BOOLEAN DEFAULT false,
+  otp_code VARCHAR(6),
+  otp_expires_at TIMESTAMP,
   sales_count INTEGER DEFAULT 0,
   rating NUMERIC(3,1) DEFAULT 0,
   created_at TIMESTAMP DEFAULT NOW()

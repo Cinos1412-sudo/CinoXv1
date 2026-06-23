@@ -326,6 +326,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webk
 .edit-profile-body{background:var(--card);border-radius:28px 28px 0 0;padding:24px 20px;width:100%;max-height:90vh;overflow-y:auto}
 .ep-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
+/* ── OTP DIGITS ── */
+.otp-digit{width:44px;height:54px;border-radius:12px;border:2px solid var(--border);background:var(--bg);font-size:22px;font-weight:800;text-align:center;color:var(--p1);outline:none;transition:border-color .2s;font-family:'Inter',sans-serif;-moz-appearance:textfield}
+.otp-digit:focus{border-color:var(--p1);background:white}
+.otp-digit.filled{border-color:var(--p1);background:#F5F3FF}
+
 /* ── TOAST ── */
 .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:white;padding:10px 20px;border-radius:28px;font-size:13px;font-weight:600;opacity:0;transition:opacity .25s,transform .25s;z-index:900;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.25)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -348,24 +353,59 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webk
       <div class="auth-logo-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5z" fill="white"/><path d="M2 17l10 5 10-5" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round"/><path d="M2 12l10 5 10-5" stroke="rgba(255,255,255,0.5)" stroke-width="2" stroke-linecap="round"/></svg></div>
       CinoX
     </div>
-    <div class="auth-tabs">
+
+    <!-- TABS (cachés pendant la vérif) -->
+    <div class="auth-tabs" id="auth-tabs">
       <div class="auth-tab active" onclick="switchAuthTab('login')">Connexion</div>
       <div class="auth-tab" onclick="switchAuthTab('register')">Inscription</div>
     </div>
+
     <div id="auth-err" class="auth-err"></div>
+
     <!-- LOGIN -->
     <div class="auth-form" id="login-form">
-      <input class="auth-input" id="login-email" type="text" placeholder="Email ou nom d'utilisateur">
-      <input class="auth-input" id="login-password" type="password" placeholder="Mot de passe">
+      <input class="auth-input" id="login-email" type="text" placeholder="Email ou nom d'utilisateur" autocomplete="email">
+      <input class="auth-input" id="login-password" type="password" placeholder="Mot de passe" autocomplete="current-password">
       <button class="auth-btn" onclick="doLogin()">Se connecter</button>
-      <div style="text-align:center;font-size:13px;color:var(--sub);font-weight:500">Compte de démo : <strong>alice@cinox.mg</strong> / <strong>password</strong></div>
+      <div style="text-align:center;font-size:13px;color:var(--sub);font-weight:500">Compte démo : <strong>alice@cinox.mg</strong> / <strong>password</strong></div>
     </div>
+
     <!-- REGISTER -->
     <div class="auth-form" id="register-form" style="display:none">
-      <input class="auth-input" id="reg-username" type="text" placeholder="Nom d'utilisateur">
-      <input class="auth-input" id="reg-displayname" type="text" placeholder="Nom affiché">
-      <input class="auth-input" id="reg-email" type="email" placeholder="Email">
-      <input class="auth-input" id="reg-password" type="password" placeholder="Mot de passe">
+      <!-- Username -->
+      <div style="position:relative">
+        <input class="auth-input" id="reg-username" type="text" placeholder="Nom d'utilisateur (ex: jean.rakoto)" autocomplete="username" oninput="validateUsername(this)">
+        <div id="reg-username-hint" style="font-size:11px;margin-top:4px;padding:0 4px;display:none"></div>
+      </div>
+      <!-- Nom affiché -->
+      <input class="auth-input" id="reg-displayname" type="text" placeholder="Nom affiché (ex: Jean Rakoto)">
+      <!-- Email avec validation live -->
+      <div>
+        <div style="position:relative">
+          <input class="auth-input" id="reg-email" type="email" placeholder="Adresse email" autocomplete="email" oninput="validateEmailField(this)" style="padding-right:40px">
+          <span id="email-check-icon" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:16px;display:none"></span>
+        </div>
+        <div id="reg-email-hint" style="font-size:11px;margin-top:4px;padding:0 4px;display:none"></div>
+      </div>
+      <!-- Mot de passe avec indicateur de force -->
+      <div>
+        <input class="auth-input" id="reg-password" type="password" placeholder="Mot de passe (min. 6 caractères)" autocomplete="new-password" oninput="updatePasswordStrength(this.value)">
+        <div id="pwd-strength-bar" style="display:none;margin-top:6px">
+          <div style="display:flex;gap:4px;margin-bottom:4px">
+            <div id="ps1" style="flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .3s"></div>
+            <div id="ps2" style="flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .3s"></div>
+            <div id="ps3" style="flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .3s"></div>
+            <div id="ps4" style="flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .3s"></div>
+          </div>
+          <div id="pwd-strength-label" style="font-size:11px;font-weight:600;padding:0 2px"></div>
+        </div>
+      </div>
+      <!-- Confirmation mot de passe -->
+      <div>
+        <input class="auth-input" id="reg-password2" type="password" placeholder="Confirmer le mot de passe" autocomplete="new-password" oninput="checkPasswordMatch()">
+        <div id="pwd-match-hint" style="font-size:11px;margin-top:4px;padding:0 4px;display:none"></div>
+      </div>
+      <!-- Ville -->
       <select class="auth-input" id="reg-location" style="appearance:auto">
         <option value="Antananarivo">Antananarivo</option>
         <option value="Toamasina">Toamasina</option>
@@ -376,6 +416,41 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webk
       </select>
       <button class="auth-btn" onclick="doRegister()">Créer mon compte</button>
     </div>
+
+    <!-- VÉRIFICATION EMAIL (OTP) -->
+    <div id="verify-form" style="display:none">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:48px;margin-bottom:12px">📧</div>
+        <div style="font-size:17px;font-weight:800;color:var(--text)">Vérifiez votre email</div>
+        <div style="font-size:13px;color:var(--sub);margin-top:6px;line-height:1.5">Un code à 6 chiffres a été envoyé à<br><strong id="verify-email-display" style="color:var(--p1)"></strong></div>
+      </div>
+
+      <!-- Démo : affiche le code -->
+      <div id="otp-demo-box" style="background:linear-gradient(135deg,#F5F3FF,#EDE9FE);border:1.5px solid var(--p3);border-radius:14px;padding:14px;margin-bottom:16px;display:none">
+        <div style="font-size:11px;font-weight:700;color:var(--p1);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🛠 Mode démo — Votre code</div>
+        <div id="otp-demo-code" style="font-size:28px;font-weight:900;color:var(--p1);letter-spacing:8px;text-align:center"></div>
+        <div style="font-size:11px;color:var(--sub);margin-top:4px;text-align:center">(En production, ce code serait envoyé par email)</div>
+      </div>
+
+      <!-- Champs OTP -->
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px" id="otp-inputs">
+        <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+      </div>
+      <button class="auth-btn" onclick="doVerifyOTP()">Vérifier le code</button>
+      <div style="text-align:center;margin-top:12px">
+        <span style="font-size:13px;color:var(--sub)">Pas reçu ? </span>
+        <span style="font-size:13px;font-weight:700;color:var(--p1);cursor:pointer" onclick="doResendOTP()">Renvoyer le code</span>
+      </div>
+      <div style="text-align:center;margin-top:8px">
+        <span style="font-size:12px;color:var(--sub);cursor:pointer" onclick="switchAuthTab('register')">← Modifier l'email</span>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -690,6 +765,100 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webk
 <div class="toast" id="toast"></div>
 
 <script>
+// ===== OTP DIGIT INPUTS =====
+document.addEventListener('DOMContentLoaded', () => {
+  const digits = document.querySelectorAll('.otp-digit');
+  digits.forEach((d, i) => {
+    d.addEventListener('input', () => {
+      d.value = d.value.replace(/\D/g, '').slice(-1);
+      d.classList.toggle('filled', d.value !== '');
+      if (d.value && i < digits.length - 1) digits[i + 1].focus();
+    });
+    d.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !d.value && i > 0) digits[i - 1].focus();
+    });
+    d.addEventListener('paste', e => {
+      const txt = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+      if (txt.length === 6) {
+        digits.forEach((dd, ii) => { dd.value = txt[ii] || ''; dd.classList.toggle('filled', !!dd.value); });
+        digits[5].focus();
+        e.preventDefault();
+      }
+    });
+  });
+});
+
+// ===== VALIDATION HELPERS =====
+function isValidEmailFormat(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
+function validateEmailField(input) {
+  const val = input.value.trim();
+  const hint = document.getElementById('reg-email-hint');
+  const icon = document.getElementById('email-check-icon');
+  if (!val) { hint.style.display = 'none'; icon.style.display = 'none'; input.style.borderColor = ''; return; }
+  if (!isValidEmailFormat(val)) {
+    hint.textContent = '⚠️ Format invalide (ex: nom@domaine.mg)';
+    hint.style.color = 'var(--danger)'; hint.style.display = 'block';
+    icon.textContent = '❌'; icon.style.display = 'inline';
+    input.style.borderColor = 'var(--danger)';
+  } else {
+    hint.textContent = '✓ Format valide';
+    hint.style.color = 'var(--success)'; hint.style.display = 'block';
+    icon.textContent = '✅'; icon.style.display = 'inline';
+    input.style.borderColor = 'var(--success)';
+  }
+}
+
+function validateUsername(input) {
+  const val = input.value.trim();
+  const hint = document.getElementById('reg-username-hint');
+  if (!val) { hint.style.display = 'none'; input.style.borderColor = ''; return; }
+  if (val.length < 3) {
+    hint.textContent = '⚠️ Minimum 3 caractères'; hint.style.color = 'var(--danger)';
+    input.style.borderColor = 'var(--danger)';
+  } else if (!/^[a-zA-Z0-9._-]+$/.test(val)) {
+    hint.textContent = '⚠️ Lettres, chiffres, . _ - uniquement'; hint.style.color = 'var(--danger)';
+    input.style.borderColor = 'var(--danger)';
+  } else {
+    hint.textContent = '✓ Disponible'; hint.style.color = 'var(--success)';
+    input.style.borderColor = 'var(--success)';
+  }
+  hint.style.display = 'block';
+}
+
+function updatePasswordStrength(pwd) {
+  const bar = document.getElementById('pwd-strength-bar');
+  const label = document.getElementById('pwd-strength-label');
+  const segs = [document.getElementById('ps1'),document.getElementById('ps2'),document.getElementById('ps3'),document.getElementById('ps4')];
+  if (!pwd) { bar.style.display = 'none'; return; }
+  bar.style.display = 'block';
+  let score = 0;
+  if (pwd.length >= 6) score++;
+  if (pwd.length >= 10) score++;
+  if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd) || /[^A-Za-z0-9]/.test(pwd)) score++;
+  const colors = ['var(--danger)','var(--accent)','var(--accent2)','var(--success)'];
+  const labels = [['Trop court','var(--danger)'],['Faible','var(--accent)'],['Moyen','var(--accent2)'],['Fort ✓','var(--success)']];
+  segs.forEach((s, i) => { s.style.background = i < score ? colors[score - 1] : 'var(--border)'; });
+  label.textContent = labels[score - 1]?.[0] || '';
+  label.style.color = labels[score - 1]?.[1] || 'var(--sub)';
+}
+
+function checkPasswordMatch() {
+  const p1 = document.getElementById('reg-password').value;
+  const p2 = document.getElementById('reg-password2').value;
+  const hint = document.getElementById('pwd-match-hint');
+  if (!p2) { hint.style.display = 'none'; return; }
+  if (p1 === p2) { hint.textContent = '✓ Mots de passe identiques'; hint.style.color = 'var(--success)'; }
+  else { hint.textContent = '⚠️ Les mots de passe ne correspondent pas'; hint.style.color = 'var(--danger)'; }
+  hint.style.display = 'block';
+}
+
+// OTP state
+let pendingVerification = null;
+
 // ===== STATE =====
 let ME = null;
 let currentPage = 'auth';
@@ -740,7 +909,26 @@ function switchAuthTab(tab) {
   document.querySelector(`.auth-tab:${tab === 'login' ? 'first-child' : 'last-child'}`).classList.add('active');
   document.getElementById('login-form').style.display = tab === 'login' ? 'flex' : 'none';
   document.getElementById('register-form').style.display = tab === 'register' ? 'flex' : 'none';
+  document.getElementById('verify-form').style.display = 'none';
+  document.getElementById('auth-tabs').style.display = 'flex';
   document.getElementById('auth-err').style.display = 'none';
+}
+
+function showVerifyScreen(userId, email, otpDemo) {
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'none';
+  document.getElementById('auth-tabs').style.display = 'none';
+  document.getElementById('auth-err').style.display = 'none';
+  document.getElementById('verify-email-display').textContent = email;
+  document.getElementById('verify-form').style.display = 'block';
+  // Mode démo : affiche le code
+  if (otpDemo) {
+    document.getElementById('otp-demo-box').style.display = 'block';
+    document.getElementById('otp-demo-code').textContent = otpDemo;
+  }
+  // Focus premier champ
+  document.querySelectorAll('.otp-digit').forEach(d => d.value = '');
+  document.querySelector('.otp-digit')?.focus();
 }
 
 async function doLogin() {
@@ -748,6 +936,13 @@ async function doLogin() {
   const password = document.getElementById('login-password').value;
   if (!email || !password) return showAuthErr('Remplissez tous les champs');
   const r = await POST('/api/login', { email, password });
+  if (r.error === 'email_not_verified') {
+    // L'email n'est pas encore vérifié → renvoyer un code et afficher l'écran de vérif
+    pendingVerification = { user_id: r.user_id, email: r.email };
+    const resend = await POST('/api/resend-otp', { user_id: r.user_id });
+    showVerifyScreen(r.user_id, r.email, resend.otp_demo);
+    return;
+  }
   if (r.error) return showAuthErr(r.error);
   ME = r.user;
   afterLogin();
@@ -758,12 +953,45 @@ async function doRegister() {
   const display_name = document.getElementById('reg-displayname').value.trim();
   const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
+  const password2 = document.getElementById('reg-password2').value;
   const location = document.getElementById('reg-location').value;
   if (!username || !email || !password) return showAuthErr('Remplissez tous les champs');
+  if (!isValidEmailFormat(email)) return showAuthErr('Format d\'email invalide (ex: nom@domaine.mg)');
+  if (username.length < 3) return showAuthErr('Nom d\'utilisateur trop court (min. 3 caractères)');
+  if (!/^[a-zA-Z0-9._-]+$/.test(username)) return showAuthErr('Nom d\'utilisateur invalide (lettres, chiffres, . _ - uniquement)');
+  if (password.length < 6) return showAuthErr('Mot de passe trop court (min. 6 caractères)');
+  if (password !== password2) return showAuthErr('Les mots de passe ne correspondent pas');
   const r = await POST('/api/register', { username, email, password, display_name, location });
   if (r.error) return showAuthErr(r.error);
+  if (r.pending_verification) {
+    pendingVerification = { user_id: r.user_id, email: r.email };
+    showVerifyScreen(r.user_id, r.email, r.otp_demo);
+  }
+}
+
+async function doVerifyOTP() {
+  if (!pendingVerification) return;
+  const digits = document.querySelectorAll('.otp-digit');
+  const code = Array.from(digits).map(d => d.value).join('');
+  if (code.length !== 6) return showAuthErr('Entrez les 6 chiffres du code');
+  const r = await POST('/api/verify-email', { user_id: pendingVerification.user_id, code });
+  if (r.error) return showAuthErr(r.error);
   ME = r.user;
+  pendingVerification = null;
   afterLogin();
+}
+
+async function doResendOTP() {
+  if (!pendingVerification) return;
+  const r = await POST('/api/resend-otp', { user_id: pendingVerification.user_id });
+  if (r.error) return showAuthErr(r.error);
+  if (r.otp_demo) {
+    document.getElementById('otp-demo-box').style.display = 'block';
+    document.getElementById('otp-demo-code').textContent = r.otp_demo;
+  }
+  document.querySelectorAll('.otp-digit').forEach(d => d.value = '');
+  document.querySelector('.otp-digit')?.focus();
+  showToast('✅ Nouveau code envoyé !');
 }
 
 function showAuthErr(msg) {

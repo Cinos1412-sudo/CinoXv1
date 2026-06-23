@@ -51,22 +51,69 @@ const auth = (req, res, next) => {
   next();
 };
 
+// ====== HELPERS ======
+function generateOTP() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
 // ====== AUTH ======
 app.post('/api/register', async (req, res) => {
   const { username, email, password, display_name, location } = req.body;
   if (!username || !email || !password) return res.status(400).json({ error: 'Champs requis manquants' });
+  if (!isValidEmail(email)) return res.status(400).json({ error: 'Format d\'email invalide' });
+  if (username.length < 3) return res.status(400).json({ error: 'Nom d\'utilisateur trop court (min. 3 caractères)' });
+  if (!/^[a-zA-Z0-9._-]+$/.test(username)) return res.status(400).json({ error: 'Nom d\'utilisateur invalide (lettres, chiffres, . _ - uniquement)' });
+  if (password.length < 6) return res.status(400).json({ error: 'Mot de passe trop court (min. 6 caractères)' });
   try {
+    const otp = generateOTP();
+    const otpExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 min
     const hash = await bcrypt.hash(password, 10);
     const r = await pool.query(
-      'INSERT INTO users (username,email,password_hash,display_name,location) VALUES ($1,$2,$3,$4,$5) RETURNING id,username,display_name,location,avatar_url,bio',
-      [username.toLowerCase(), email.toLowerCase(), hash, display_name || username, location || 'Antananarivo']
+      `INSERT INTO users (username,email,password_hash,display_name,location,email_verified,otp_code,otp_expires_at)
+       VALUES ($1,$2,$3,$4,$5,false,$6,$7) RETURNING id,username,email,display_name,location,avatar_url,bio`,
+      [username.toLowerCase(), email.toLowerCase(), hash, display_name || username, location || 'Antananarivo', otp, otpExpires]
     );
-    req.session.userId = r.rows[0].id;
-    res.json({ user: r.rows[0] });
+    console.log(`[OTP] Code pour ${email}: ${otp}`);
+    res.json({ pending_verification: true, user_id: r.rows[0].id, email: email.toLowerCase(), otp_demo: otp });
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ error: 'Nom d\'utilisateur ou email déjà utilisé' });
     res.status(500).json({ error: e.message });
   }
+});
+
+app.post('/api/verify-email', async (req, res) => {
+  const { user_id, code } = req.body;
+  if (!user_id || !code) return res.status(400).json({ error: 'Données manquantes' });
+  try {
+    const r = await pool.query('SELECT * FROM users WHERE id=$1', [user_id]);
+    if (!r.rows.length) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    const user = r.rows[0];
+    if (user.email_verified) return res.status(400).json({ error: 'Email déjà vérifié' });
+    if (!user.otp_code) return res.status(400).json({ error: 'Aucun code en attente' });
+    if (new Date() > new Date(user.otp_expires_at)) return res.status(400).json({ error: 'Code expiré. Demandez-en un nouveau.' });
+    if (user.otp_code !== code.trim()) return res.status(400).json({ error: 'Code incorrect' });
+    await pool.query('UPDATE users SET email_verified=true, otp_code=NULL, otp_expires_at=NULL WHERE id=$1', [user_id]);
+    req.session.userId = user.id;
+    const { password_hash, otp_code, otp_expires_at, ...safe } = user;
+    res.json({ user: { ...safe, email_verified: true } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/resend-otp', async (req, res) => {
+  const { user_id } = req.body;
+  if (!user_id) return res.status(400).json({ error: 'Données manquantes' });
+  try {
+    const otp = generateOTP();
+    const otpExpires = new Date(Date.now() + 15 * 60 * 1000);
+    const r = await pool.query('UPDATE users SET otp_code=$1, otp_expires_at=$2 WHERE id=$3 AND email_verified=false RETURNING email', [otp, otpExpires, user_id]);
+    if (!r.rows.length) return res.status(404).json({ error: 'Utilisateur introuvable ou déjà vérifié' });
+    console.log(`[OTP] Nouveau code pour ${r.rows[0].email}: ${otp}`);
+    res.json({ ok: true, otp_demo: otp });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/login', async (req, res) => {
@@ -77,8 +124,11 @@ app.post('/api/login', async (req, res) => {
     const user = r.rows[0];
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) return res.status(401).json({ error: 'Mot de passe incorrect' });
+    if (!user.email_verified) {
+      return res.status(403).json({ error: 'email_not_verified', user_id: user.id, email: user.email });
+    }
     req.session.userId = user.id;
-    const { password_hash, ...safe } = user;
+    const { password_hash, otp_code, otp_expires_at, ...safe } = user;
     res.json({ user: safe });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
