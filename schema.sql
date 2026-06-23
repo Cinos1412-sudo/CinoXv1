@@ -77,10 +77,10 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 INSERT INTO users (username, email, password_hash, display_name, bio, location, phone_mvola, phone_orange, is_verified, sales_count, rating)
 VALUES
-  ('alice.rakoto', 'alice@cinox.mg', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Alice Rakoto', 'Passionnée de tech & mode vintage 📱👗 Livraison partout à Madagascar 🇲🇬', 'Antananarivo', '034 12 345 67', '032 98 765 43', true, 24, 4.9),
-  ('andry.tech', 'andry@cinox.mg', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'TechAndry', 'Revendeur matériel tech certifié 🔧 Antananarivo', 'Antananarivo', '034 55 678 90', '', true, 18, 4.8),
-  ('marie.mode', 'marie@cinox.mg', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MarieMode', 'Mode vintage & tendance à Mahajanga 👗', 'Mahajanga', '032 11 222 33', '034 44 555 66', true, 31, 4.9),
-  ('tom.games', 'tom@cinox.mg', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'GameTom', 'Jeux vidéo & consoles 🎮 Toamasina', 'Toamasina', '', '033 77 888 99', false, 12, 4.7)
+  ('alice.rakoto', 'alice@cinox.mg', '$2a$10$CvwZs5MkcnLpDky/uvQG4OfhCQjRXYarQgpet1UohtQS2drdy00Ci', 'Alice Rakoto', 'Passionnée de tech & mode vintage 📱👗 Livraison partout à Madagascar 🇲🇬', 'Antananarivo', '034 12 345 67', '032 98 765 43', true, 24, 4.9),
+  ('andry.tech', 'andry@cinox.mg', '$2a$10$CvwZs5MkcnLpDky/uvQG4OfhCQjRXYarQgpet1UohtQS2drdy00Ci', 'TechAndry', 'Revendeur matériel tech certifié 🔧 Antananarivo', 'Antananarivo', '034 55 678 90', '', true, 18, 4.8),
+  ('marie.mode', 'marie@cinox.mg', '$2a$10$CvwZs5MkcnLpDky/uvQG4OfhCQjRXYarQgpet1UohtQS2drdy00Ci', 'MarieMode', 'Mode vintage & tendance à Mahajanga 👗', 'Mahajanga', '032 11 222 33', '034 44 555 66', true, 31, 4.9),
+  ('tom.games', 'tom@cinox.mg', '$2a$10$CvwZs5MkcnLpDky/uvQG4OfhCQjRXYarQgpet1UohtQS2drdy00Ci', 'GameTom', 'Jeux vidéo & consoles 🎮 Toamasina', 'Toamasina', '', '033 77 888 99', false, 12, 4.7)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO products (seller_id, title, description, price, category, state, location, images)
