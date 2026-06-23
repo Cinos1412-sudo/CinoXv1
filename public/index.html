@@ -31,6 +31,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
 /* === PAGES === */
 .page { display: none; min-height: 100vh; padding-bottom: 84px; }
 .page.active { display: block; }
+#page-chat.active { display: flex; }
 
 /* === HEADER === */
 .header {
@@ -738,7 +739,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
 </div>
 
 <!-- ===== CHAT ===== -->
-<div class="page" id="page-chat" style="padding-bottom:0;display:flex;flex-direction:column;">
+<div class="page" id="page-chat" style="padding-bottom:0;flex-direction:column;">
     <div class="chat-header">
         <button class="chat-back" onclick="navigateTo('messages')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
