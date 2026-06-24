@@ -350,6 +350,25 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webk
 .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:white;padding:10px 20px;border-radius:28px;font-size:13px;font-weight:600;opacity:0;transition:opacity .25s,transform .25s;z-index:900;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.25)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* ── USER PROFILE ── */
+.up-cover{background:linear-gradient(135deg,var(--p1) 0%,#8B5CF6 100%);padding:20px 16px 55px;position:relative}
+.up-back{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.up-back svg{color:white}
+.up-av-wrap{width:76px;height:76px;border-radius:50%;margin:8px auto 0;background:white;padding:3px}
+.up-av-inner{width:100%;height:100%;border-radius:50%;overflow:hidden}
+.up-av-inner img{width:100%;height:100%;object-fit:cover}
+.up-av-inner.placeholder{background:linear-gradient(135deg,var(--p2),var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-size:26px;font-weight:800}
+.up-name{text-align:center;font-size:19px;font-weight:800;color:white;margin-top:8px}
+.up-handle{text-align:center;font-size:12px;color:rgba(255,255,255,.7);margin-top:2px}
+.up-card{margin:-38px 16px 0;background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--shadow-lg)}
+.up-bio{font-size:13px;color:var(--sub);text-align:center;margin-bottom:14px;font-weight:500}
+.up-action-row{display:flex;gap:10px;margin-top:14px}
+.up-follow-btn{flex:1;padding:11px;border-radius:14px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s;border:none}
+.up-follow-btn.following{background:var(--bg);border:1.5px solid var(--border);color:var(--text)}
+.up-follow-btn.not-following{background:linear-gradient(135deg,var(--p1),#8B5CF6);color:white;box-shadow:0 3px 10px rgba(108,60,225,.3)}
+.up-msg-btn{flex:1;padding:11px;border-radius:14px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;background:var(--bg);border:1.5px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;gap:6px}
+.up-listings-title{font-size:15px;font-weight:800;padding:16px 16px 8px}
+
 /* ── SPINNER ── */
 .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--p1);border-radius:50%;animation:spin .7s linear infinite;margin:20px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -542,11 +561,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webk
     <button class="page-header-action" onclick="showToast('Brouillon sauvegardé')">Brouillon</button>
   </div>
   <div class="sell-form">
-    <div class="photo-upload" onclick="showToast('Upload photo bientôt disponible')">
+    <label class="photo-upload" for="sell-photo-input" style="cursor:pointer">
       <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
       <div style="font-size:14px;font-weight:700">Ajouter des photos</div>
       <div style="font-size:12px">Jusqu'à 8 photos</div>
-    </div>
+    </label>
+    <input type="file" id="sell-photo-input" accept="image/*" multiple style="display:none" onchange="handleSellPhotos(this)">
+    <div id="sell-photo-preview" style="display:flex;gap:8px;flex-wrap:wrap;padding:0 2px"></div>
     <div><label class="form-label">Titre de l'annonce</label><input type="text" class="form-input" id="sell-title" placeholder="Ex: Samsung Galaxy S23 – 128Go"></div>
     <div><label class="form-label">Description</label><textarea class="form-textarea" id="sell-desc" placeholder="Décrivez votre article..."></textarea></div>
     <div class="form-row">
@@ -704,18 +725,45 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webk
   </button>
 </nav>
 
+<!-- ======== USER PROFILE PAGE ======== -->
+<div class="page" id="page-user-profile">
+  <div class="up-cover">
+    <button class="up-back" onclick="goBack()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="up-av-wrap">
+      <div class="up-av-inner placeholder" id="up-av-inner">?</div>
+    </div>
+    <div class="up-name" id="up-name"></div>
+    <div class="up-handle" id="up-handle"></div>
+  </div>
+  <div class="up-card">
+    <div class="up-bio" id="up-bio"></div>
+    <div class="profile-stats" id="up-stats"></div>
+    <div class="up-action-row" id="up-actions"></div>
+  </div>
+  <div class="up-listings-title">Articles en vente</div>
+  <div class="products-grid" id="up-grid" style="padding-bottom:24px"></div>
+</div>
+
 <!-- ======== STORY OVERLAY ======== -->
 <div class="story-overlay" id="story-overlay">
   <div class="sp-bar" id="sp-bar"></div>
   <div class="story-ol-header">
-    <img class="story-ol-av" id="story-av" src="" alt="">
-    <div><div class="story-ol-name" id="story-name"></div><div class="story-ol-time">Il y a 2h</div></div>
+    <img class="story-ol-av" id="story-av" src="" alt="" style="cursor:pointer" onclick="if(storiesData[activeStoryIdx]?.product?.seller_id)openUserProfile(storiesData[activeStoryIdx].product.seller_id)">
+    <div style="cursor:pointer" onclick="if(storiesData[activeStoryIdx]?.product?.seller_id)openUserProfile(storiesData[activeStoryIdx].product.seller_id)">
+      <div class="story-ol-name" id="story-name"></div>
+      <div class="story-ol-time">Il y a 2h</div>
+    </div>
     <button class="story-ol-close" onclick="closeStory()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
   </div>
-  <div class="story-content">
+  <div class="story-content" id="story-content">
     <img id="story-img" src="" alt="">
+    <!-- Zones de navigation gauche/droite -->
+    <div style="position:absolute;top:0;left:0;width:38%;height:85%;z-index:10;cursor:pointer" onclick="prevStory()"></div>
+    <div style="position:absolute;top:0;right:0;width:62%;height:85%;z-index:10;cursor:pointer" onclick="nextStory()"></div>
     <div class="story-bottom-card">
       <img class="story-prod-img" id="story-prod-img" src="" alt="">
       <div style="flex:1"><div class="story-prod-price" id="story-prod-price"></div><div class="story-prod-title" id="story-prod-title"></div></div>
@@ -785,7 +833,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webk
 </div>
 
 <!-- ======== BANNIÈRE PWA ======== -->
-<div id="pwa-banner" style="display:none;position:fixed;bottom:90px;left:12px;right:12px;background:linear-gradient(135deg,var(--p1),#8B5CF6);border-radius:18px;padding:14px 16px;z-index:800;box-shadow:0 8px 28px rgba(108,60,225,.45);display:none;align-items:center;gap:12px">
+<div id="pwa-banner" style="display:none;position:fixed;bottom:90px;left:12px;right:12px;background:linear-gradient(135deg,var(--p1),#8B5CF6);border-radius:18px;padding:14px 16px;z-index:800;box-shadow:0 8px 28px rgba(108,60,225,.45);align-items:center;gap:12px">
   <div style="width:40px;height:40px;background:rgba(255,255,255,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">📦</div>
   <div style="flex:1">
     <div style="font-size:13px;font-weight:800;color:white">Installer CinoX</div>
@@ -926,13 +974,14 @@ function navigateTo(page) {
   document.querySelectorAll('[data-page]').forEach(b => b.classList.remove('active'));
   const ab = document.querySelector(`[data-page="${page}"]`);
   if (ab) ab.classList.add('active');
-  const noNav = ['auth', 'detail', 'chat'];
+  const noNav = ['auth', 'detail', 'chat', 'user-profile'];
   document.getElementById('bottom-nav').style.display = noNav.includes(page) ? 'none' : 'flex';
   window.scrollTo(0, 0);
 }
 
 function goBack() {
-  const safe = ['detail','chat'].includes(previousPage) ? 'home' : previousPage;
+  const noReturn = ['detail','chat','user-profile'];
+  const safe = noReturn.includes(previousPage) ? 'home' : previousPage;
   navigateTo(safe);
 }
 
@@ -1149,7 +1198,7 @@ function productCardHTML(p) {
       <div class="product-price">${(+p.price).toLocaleString('fr-MG')} <span>Ar</span></div>
       <div class="product-title">${p.title}</div>
       <div class="product-meta">
-        <div class="seller-row-small">
+        <div class="seller-row-small" onclick="event.stopPropagation();openUserProfile(${p.seller_id})" style="cursor:pointer">
           ${p.seller_avatar ? `<img src="${p.seller_avatar}" class="s-av" alt="">` : `<div class="s-av-ph"></div>`}
           <span class="s-name">${p.seller_name||p.seller_username}</span>
           ${p.seller_verified ? '<span style="font-size:10px;color:var(--p1)">✓</span>' : ''}
@@ -1260,10 +1309,12 @@ async function openProduct(id) {
   }
 
   document.getElementById('detail-seller-row').innerHTML = `
-    ${p.seller_avatar ? `<img src="${p.seller_avatar}" class="seller-big-av" alt="">` : `<div class="seller-big-av-ph">${(p.seller_name||'?')[0]}</div>`}
-    <div class="seller-card-info">
-      <div class="seller-card-name">${p.seller_name} ${p.seller_verified ? '<span style="color:var(--p1);font-size:12px">✓</span>' : ''}</div>
-      <div class="seller-card-sub">${p.sales_count||0} ventes · ${p.location}</div>
+    <div style="display:flex;align-items:center;gap:12px;flex:1;cursor:pointer" onclick="openUserProfile(${p.seller_id})">
+      ${p.seller_avatar ? `<img src="${p.seller_avatar}" class="seller-big-av" alt="">` : `<div class="seller-big-av-ph">${(p.seller_name||'?')[0]}</div>`}
+      <div class="seller-card-info">
+        <div class="seller-card-name">${p.seller_name} ${p.seller_verified ? '<span style="color:var(--p1);font-size:12px">✓</span>' : ''}</div>
+        <div class="seller-card-sub">${p.sales_count||0} ventes · ${p.location}</div>
+      </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
       <div class="seller-card-rating">
@@ -1353,11 +1404,14 @@ async function openConversation(convId) {
   const isBuyer = ME && conv.buyer_id == ME.id;
   const otherName = isBuyer ? conv.seller_name : conv.buyer_name;
   const otherAv = isBuyer ? conv.seller_avatar : conv.buyer_avatar;
+  const otherId = isBuyer ? conv.seller_id : conv.buyer_id;
 
   document.getElementById('chat-hname').textContent = otherName || '—';
+  document.getElementById('chat-hname').style.cursor = 'pointer';
+  document.getElementById('chat-hname').onclick = () => openUserProfile(otherId);
   document.getElementById('chat-hav-wrap').innerHTML = otherAv
-    ? `<img class="chat-hav" src="${otherAv}" alt="">`
-    : `<div class="chat-hav-ph">${(otherName||'?')[0]}</div>`;
+    ? `<img class="chat-hav" src="${otherAv}" alt="" style="cursor:pointer" onclick="openUserProfile(${otherId})">`
+    : `<div class="chat-hav-ph" style="cursor:pointer" onclick="openUserProfile(${otherId})">${(otherName||'?')[0]}</div>`;
 
   if (conv.product_img) {
     document.getElementById('chat-product-bar').style.display = 'flex';
@@ -1521,7 +1575,12 @@ function openPaymentModal(product) {
 
   document.getElementById('btn-go-chat').onclick = async () => {
     closePaymentModal();
+    if (currentPage === 'chat' && activeConvId) {
+      showToast('📸 Envoyez maintenant votre capture de paiement dans le chat');
+      return;
+    }
     await openChat(product.seller_id, product.id);
+    setTimeout(() => showToast('📸 Envoyez la capture de votre paiement ici !'), 600);
   };
   document.getElementById('payment-modal').classList.add('open');
 }
@@ -1690,6 +1749,7 @@ function openStory(i) {
   drawStory();
   document.getElementById('story-overlay').classList.add('open');
   startStoryTimer();
+  initStorySwipe();
 }
 function drawStory() {
   const s = storiesData[activeStoryIdx];
@@ -1714,8 +1774,26 @@ function startStoryTimer() {
     else closeStory();
   }, 5000);
 }
+function nextStory() {
+  if (activeStoryIdx < storiesData.length - 1) { activeStoryIdx++; drawStory(); startStoryTimer(); }
+  else closeStory();
+}
+function prevStory() {
+  if (activeStoryIdx > 0) { activeStoryIdx--; drawStory(); startStoryTimer(); }
+  else { drawStory(); startStoryTimer(); }
+}
 function closeStory() { clearTimeout(storyTimer); document.getElementById('story-overlay').classList.remove('open'); }
 function openFromStory() { closeStory(); if (storiesData[activeStoryIdx]?.product?.id) openProduct(storiesData[activeStoryIdx].product.id); }
+
+let storySwipeStartX = 0;
+function initStorySwipe() {
+  const el = document.getElementById('story-content');
+  el.ontouchstart = e => { storySwipeStartX = e.touches[0].clientX; };
+  el.ontouchend = e => {
+    const dx = e.changedTouches[0].clientX - storySwipeStartX;
+    if (Math.abs(dx) > 50) { dx < 0 ? nextStory() : prevStory(); }
+  };
+}
 
 // ===== TOAST =====
 function showToast(msg) {
