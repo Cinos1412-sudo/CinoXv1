@@ -1,0 +1,51 @@
+workflows:
+  android-release:
+    name: CinoX Android APK
+    max_build_duration: 60
+    instance_type: linux_x2
+
+    environment:
+      node: 18.17.0
+      java: 17
+      android_signing:
+        - cinox_keystore  # Configuré dans Codemagic dashboard
+      vars:
+        PACKAGE_NAME: "mg.cinox.app"
+
+    scripts:
+      - name: Installer les dépendances Node.js
+        script: npm ci
+
+      - name: Installer Capacitor CLI
+        script: npm install -g @capacitor/cli
+
+      - name: Installer les dépendances Capacitor
+        script: |
+          npm install @capacitor/core @capacitor/android @capacitor/splash-screen @capacitor/status-bar @capacitor/keyboard
+
+      - name: Initialiser le projet Android
+        script: |
+          npx cap add android || true
+          npx cap sync android
+
+      - name: Mettre à jour la version de l'APK
+        script: |
+          LATEST_BUILD=$(google-play get-latest-build-number --package-name "$PACKAGE_NAME" 2>/dev/null || echo "0")
+          echo "Build number: $LATEST_BUILD"
+
+      - name: Build APK release
+        script: |
+          cd android
+          ./gradlew assembleRelease
+
+    artifacts:
+      - android/app/build/outputs/apk/release/app-release.apk
+      - android/app/build/outputs/apk/release/app-release-unsigned.apk
+
+    publishing:
+      email:
+        recipients:
+          - votre@email.com
+        notify:
+          success: true
+          failure: true
