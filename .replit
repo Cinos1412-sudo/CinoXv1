@@ -32,3 +32,14 @@ externalPort = 80
 
 [nix]
 channel = "stable-25_05"
+
+# ============================================
+# SECTION AJOUTÉE POUR LA PUBLICATION
+# ============================================
+[deployment]
+run = ["sh", "-c", "node server.js"]
+deploymentTarget = "cloudrun"
+
+[[deployment.repl.resources]]
+cpu = 2
+memory = 2
