@@ -6,7 +6,22 @@
 <meta name="theme-color" content="#6C3CE1">
 <title>CinoX – Marketplace Madagascar</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CinoX">
+<meta name="mobile-web-app-capable" content="yes">
 <script src="/socket.io/socket.io.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(r => console.log('SW registered'))
+      .catch(e => console.log('SW error:', e));
+  });
+}
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -425,11 +440,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webk
         <div style="font-size:13px;color:var(--sub);margin-top:6px;line-height:1.5">Un code à 6 chiffres a été envoyé à<br><strong id="verify-email-display" style="color:var(--p1)"></strong></div>
       </div>
 
-      <!-- Démo : affiche le code -->
+      <!-- Email envoyé -->
+      <div id="otp-sent-box" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border:1.5px solid #6EE7B7;border-radius:14px;padding:14px;margin-bottom:16px;display:none">
+        <div style="font-size:13px;font-weight:700;color:#059669;display:flex;align-items:center;gap:6px">
+          <span style="font-size:18px">📬</span> Email envoyé avec succès !
+        </div>
+        <div style="font-size:12px;color:#065F46;margin-top:4px">Vérifie ta boîte de réception (et les spams).</div>
+      </div>
+      <!-- Démo : affiche le code si pas d'email réel -->
       <div id="otp-demo-box" style="background:linear-gradient(135deg,#F5F3FF,#EDE9FE);border:1.5px solid var(--p3);border-radius:14px;padding:14px;margin-bottom:16px;display:none">
         <div style="font-size:11px;font-weight:700;color:var(--p1);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🛠 Mode démo — Votre code</div>
         <div id="otp-demo-code" style="font-size:28px;font-weight:900;color:var(--p1);letter-spacing:8px;text-align:center"></div>
-        <div style="font-size:11px;color:var(--sub);margin-top:4px;text-align:center">(En production, ce code serait envoyé par email)</div>
+        <div style="font-size:11px;color:var(--sub);margin-top:4px;text-align:center">(Normalement envoyé par email)</div>
       </div>
 
       <!-- Champs OTP -->
@@ -762,6 +784,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webk
   </div>
 </div>
 
+<!-- ======== BANNIÈRE PWA ======== -->
+<div id="pwa-banner" style="display:none;position:fixed;bottom:90px;left:12px;right:12px;background:linear-gradient(135deg,var(--p1),#8B5CF6);border-radius:18px;padding:14px 16px;z-index:800;box-shadow:0 8px 28px rgba(108,60,225,.45);display:none;align-items:center;gap:12px">
+  <div style="width:40px;height:40px;background:rgba(255,255,255,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">📦</div>
+  <div style="flex:1">
+    <div style="font-size:13px;font-weight:800;color:white">Installer CinoX</div>
+    <div style="font-size:11px;color:rgba(255,255,255,.75);margin-top:1px">Ajouter à l'écran d'accueil</div>
+  </div>
+  <button onclick="installPWA()" style="padding:8px 16px;background:white;border:none;border-radius:10px;font-size:12px;font-weight:800;color:var(--p1);font-family:'Inter',sans-serif;cursor:pointer">Installer</button>
+  <button onclick="document.getElementById('pwa-banner').style.display='none'" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:white;font-size:16px">×</button>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -914,19 +947,20 @@ function switchAuthTab(tab) {
   document.getElementById('auth-err').style.display = 'none';
 }
 
-function showVerifyScreen(userId, email, otpDemo) {
+function showVerifyScreen(userId, email, otpDemo, emailSent) {
   document.getElementById('login-form').style.display = 'none';
   document.getElementById('register-form').style.display = 'none';
   document.getElementById('auth-tabs').style.display = 'none';
   document.getElementById('auth-err').style.display = 'none';
   document.getElementById('verify-email-display').textContent = email;
   document.getElementById('verify-form').style.display = 'block';
-  // Mode démo : affiche le code
+  document.getElementById('otp-sent-box').style.display = emailSent ? 'block' : 'none';
   if (otpDemo) {
     document.getElementById('otp-demo-box').style.display = 'block';
     document.getElementById('otp-demo-code').textContent = otpDemo;
+  } else {
+    document.getElementById('otp-demo-box').style.display = 'none';
   }
-  // Focus premier champ
   document.querySelectorAll('.otp-digit').forEach(d => d.value = '');
   document.querySelector('.otp-digit')?.focus();
 }
@@ -937,10 +971,9 @@ async function doLogin() {
   if (!email || !password) return showAuthErr('Remplissez tous les champs');
   const r = await POST('/api/login', { email, password });
   if (r.error === 'email_not_verified') {
-    // L'email n'est pas encore vérifié → renvoyer un code et afficher l'écran de vérif
     pendingVerification = { user_id: r.user_id, email: r.email };
-    const resend = await POST('/api/resend-otp', { user_id: r.user_id });
-    showVerifyScreen(r.user_id, r.email, resend.otp_demo);
+    const resend2 = await POST('/api/resend-otp', { user_id: r.user_id });
+    showVerifyScreen(r.user_id, r.email, resend2.otp_demo, resend2.email_sent);
     return;
   }
   if (r.error) return showAuthErr(r.error);
@@ -965,7 +998,7 @@ async function doRegister() {
   if (r.error) return showAuthErr(r.error);
   if (r.pending_verification) {
     pendingVerification = { user_id: r.user_id, email: r.email };
-    showVerifyScreen(r.user_id, r.email, r.otp_demo);
+    showVerifyScreen(r.user_id, r.email, r.otp_demo, r.email_sent);
   }
 }
 
@@ -985,13 +1018,16 @@ async function doResendOTP() {
   if (!pendingVerification) return;
   const r = await POST('/api/resend-otp', { user_id: pendingVerification.user_id });
   if (r.error) return showAuthErr(r.error);
+  document.getElementById('otp-sent-box').style.display = r.email_sent ? 'block' : 'none';
   if (r.otp_demo) {
     document.getElementById('otp-demo-box').style.display = 'block';
     document.getElementById('otp-demo-code').textContent = r.otp_demo;
+  } else {
+    document.getElementById('otp-demo-box').style.display = 'none';
   }
   document.querySelectorAll('.otp-digit').forEach(d => d.value = '');
   document.querySelector('.otp-digit')?.focus();
-  showToast('✅ Nouveau code envoyé !');
+  showToast(r.email_sent ? '📬 Code renvoyé par email !' : '✅ Nouveau code généré !');
 }
 
 function showAuthErr(msg) {
@@ -1687,6 +1723,25 @@ function showToast(msg) {
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
+
+// ===== PWA INSTALL =====
+let pwaInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  pwaInstallPrompt = e;
+  if (ME) document.getElementById('pwa-banner').style.display = 'flex';
+});
+async function installPWA() {
+  if (!pwaInstallPrompt) return;
+  pwaInstallPrompt.prompt();
+  const { outcome } = await pwaInstallPrompt.userChoice;
+  if (outcome === 'accepted') { showToast('✅ CinoX installé !'); document.getElementById('pwa-banner').style.display = 'none'; }
+  pwaInstallPrompt = null;
+}
+window.addEventListener('appinstalled', () => {
+  showToast('🎉 CinoX ajouté à l\'écran d\'accueil !');
+  document.getElementById('pwa-banner').style.display = 'none';
+});
 
 // ===== INIT =====
 (async () => {

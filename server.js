@@ -8,6 +8,10 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { Pool } = require('pg');
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM_EMAIL = 'CinoX <onboarding@resend.dev>';
 
 const app = express();
 const server = http.createServer(app);
@@ -60,6 +64,58 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
 }
 
+async function sendOTPEmail(toEmail, toName, otp) {
+  if (!process.env.RESEND_API_KEY) {
+    console.log(`[OTP-DEMO] Code pour ${toEmail}: ${otp}`);
+    return { demo: true };
+  }
+  try {
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [toEmail],
+      subject: `${otp} – Votre code de vérification CinoX`,
+      html: `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#F4F3FF;font-family:'Helvetica Neue',Arial,sans-serif">
+  <div style="max-width:480px;margin:40px auto;background:white;border-radius:24px;overflow:hidden;box-shadow:0 8px 32px rgba(108,60,225,0.12)">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#6C3CE1,#8B5CF6);padding:32px 32px 24px;text-align:center">
+      <div style="display:inline-flex;align-items:center;gap:10px">
+        <div style="width:42px;height:42px;background:rgba(255,255,255,0.2);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:20px">📦</div>
+        <span style="font-size:28px;font-weight:900;color:white;letter-spacing:-1px">CinoX</span>
+      </div>
+      <p style="color:rgba(255,255,255,0.8);margin:10px 0 0;font-size:14px">La marketplace de Madagascar 🇲🇬</p>
+    </div>
+    <!-- Body -->
+    <div style="padding:32px">
+      <p style="font-size:16px;color:#0F0A2E;font-weight:600;margin:0 0 8px">Bonjour ${toName || ''} 👋</p>
+      <p style="font-size:14px;color:#7B7599;margin:0 0 24px;line-height:1.6">Voici ton code de vérification pour activer ton compte CinoX. Ce code est valable <strong>15 minutes</strong>.</p>
+      <!-- OTP Box -->
+      <div style="background:linear-gradient(135deg,#F5F3FF,#EDE9FE);border:2px solid #C4A8FF;border-radius:18px;padding:24px;text-align:center;margin:0 0 24px">
+        <p style="font-size:12px;font-weight:700;color:#6C3CE1;text-transform:uppercase;letter-spacing:2px;margin:0 0 12px">Ton code de vérification</p>
+        <div style="font-size:42px;font-weight:900;color:#6C3CE1;letter-spacing:12px;font-variant-numeric:tabular-nums">${otp}</div>
+      </div>
+      <p style="font-size:13px;color:#7B7599;margin:0 0 4px">⚠️ Ne partage jamais ce code avec quelqu'un.</p>
+      <p style="font-size:13px;color:#7B7599;margin:0">Si tu n'as pas créé de compte CinoX, ignore cet email.</p>
+    </div>
+    <!-- Footer -->
+    <div style="background:#F4F3FF;padding:20px 32px;text-align:center;border-top:1px solid #E8E5F5">
+      <p style="font-size:12px;color:#7B7599;margin:0">© 2025 CinoX – Madagascar 🇲🇬</p>
+    </div>
+  </div>
+</body>
+</html>`
+    });
+    console.log(`[EMAIL] OTP envoyé à ${toEmail}`, result.data?.id);
+    return { sent: true, id: result.data?.id };
+  } catch (err) {
+    console.error(`[EMAIL] Erreur envoi à ${toEmail}:`, err.message);
+    return { error: err.message };
+  }
+}
+
 // ====== AUTH ======
 app.post('/api/register', async (req, res) => {
   const { username, email, password, display_name, location } = req.body;
@@ -77,8 +133,15 @@ app.post('/api/register', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,false,$6,$7) RETURNING id,username,email,display_name,location,avatar_url,bio`,
       [username.toLowerCase(), email.toLowerCase(), hash, display_name || username, location || 'Antananarivo', otp, otpExpires]
     );
-    console.log(`[OTP] Code pour ${email}: ${otp}`);
-    res.json({ pending_verification: true, user_id: r.rows[0].id, email: email.toLowerCase(), otp_demo: otp });
+    const emailResult = await sendOTPEmail(email.toLowerCase(), display_name || username, otp);
+    const isDemo = !process.env.RESEND_API_KEY || emailResult.demo;
+    res.json({
+      pending_verification: true,
+      user_id: r.rows[0].id,
+      email: email.toLowerCase(),
+      otp_demo: isDemo ? otp : undefined,
+      email_sent: !isDemo
+    });
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ error: 'Nom d\'utilisateur ou email déjà utilisé' });
     res.status(500).json({ error: e.message });
@@ -111,8 +174,9 @@ app.post('/api/resend-otp', async (req, res) => {
     const otpExpires = new Date(Date.now() + 15 * 60 * 1000);
     const r = await pool.query('UPDATE users SET otp_code=$1, otp_expires_at=$2 WHERE id=$3 AND email_verified=false RETURNING email', [otp, otpExpires, user_id]);
     if (!r.rows.length) return res.status(404).json({ error: 'Utilisateur introuvable ou déjà vérifié' });
-    console.log(`[OTP] Nouveau code pour ${r.rows[0].email}: ${otp}`);
-    res.json({ ok: true, otp_demo: otp });
+    const emailResult = await sendOTPEmail(r.rows[0].email, '', otp);
+    const isDemo = !process.env.RESEND_API_KEY || emailResult.demo;
+    res.json({ ok: true, otp_demo: isDemo ? otp : undefined, email_sent: !isDemo });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
