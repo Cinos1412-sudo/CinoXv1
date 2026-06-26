@@ -762,8 +762,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webk
   <div class="story-content" id="story-content">
     <img id="story-img" src="" alt="">
     <!-- Zones de navigation gauche/droite -->
-    <div style="position:absolute;top:0;left:0;width:38%;height:85%;z-index:10;cursor:pointer" onclick="prevStory()"></div>
-    <div style="position:absolute;top:0;right:0;width:62%;height:85%;z-index:10;cursor:pointer" onclick="nextStory()"></div>
+    <div style="position:absolute;top:0;left:0;width:35%;height:100%;z-index:5;cursor:pointer" onclick="prevStory()"></div>
+    <div style="position:absolute;top:0;right:0;width:35%;height:100%;z-index:5;cursor:pointer" onclick="nextStory()"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:15%;z-index:5;cursor:pointer" onclick="nextStory()"></div>
     <div class="story-bottom-card">
       <img class="story-prod-img" id="story-prod-img" src="" alt="">
       <div style="flex:1"><div class="story-prod-price" id="story-prod-price"></div><div class="story-prod-title" id="story-prod-title"></div></div>
@@ -1347,6 +1348,32 @@ function shareProduct() {
 }
 
 // ===== PUBLISH PRODUCT =====
+let sellPhotos = [];
+
+function handleSellPhotos(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+
+  const preview = document.getElementById('sell-photo-preview');
+  preview.innerHTML = '';
+  sellPhotos = [];
+
+  files.slice(0, 8).forEach((file) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      sellPhotos.push(e.target.result);
+      const div = document.createElement('div');
+      div.style.cssText = 'position:relative;width:80px;height:80px;border-radius:12px;overflow:hidden;flex-shrink:0';
+      div.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`;
+      preview.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+
+  const label = document.querySelector('label[for="sell-photo-input"]');
+  label.innerHTML = `<div style="font-size:14px;font-weight:700">📷 ${files.length} photo(s) sélectionnée(s)</div><div style="font-size:12px">Cliquez pour changer</div>`;
+}
+
 async function publishProduct() {
   if (!ME) return showToast('Connectez-vous d\'abord');
   const title = document.getElementById('sell-title').value.trim();
@@ -1358,9 +1385,15 @@ async function publishProduct() {
     category: document.getElementById('sell-category').value,
     state: document.getElementById('sell-state').value,
     location: document.getElementById('sell-location').value,
-    images: [`https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=600&fit=crop`]
+    images: sellPhotos.length ? sellPhotos : [`https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=600&fit=crop`]
   });
-  if (r.product) { showToast('✅ Annonce publiée !'); navigateTo('home'); loadProducts(); }
+  if (r.product) { 
+    sellPhotos = [];
+    document.getElementById('sell-photo-preview').innerHTML = '';
+    const label = document.querySelector('label[for="sell-photo-input"]');
+    label.innerHTML = `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><div style="font-size:14px;font-weight:700">Ajouter des photos</div><div style="font-size:12px">Jusqu'à 8 photos</div>`;
+    showToast('✅ Annonce publiée !'); navigateTo('home'); loadProducts(); 
+  }
   else showToast('Erreur : ' + (r.error||'Inconnu'));
 }
 
@@ -1408,10 +1441,12 @@ async function openConversation(convId) {
 
   document.getElementById('chat-hname').textContent = otherName || '—';
   document.getElementById('chat-hname').style.cursor = 'pointer';
-  document.getElementById('chat-hname').onclick = () => openUserProfile(otherId);
+  document.getElementById('chat-hname').onclick = () => { if(otherId) openUserProfile(otherId); };
+  const chatHinfo = document.querySelector('.chat-hinfo');
+  if (chatHinfo) { chatHinfo.style.cursor = 'pointer'; chatHinfo.onclick = () => { if(otherId) openUserProfile(otherId); }; }
   document.getElementById('chat-hav-wrap').innerHTML = otherAv
-    ? `<img class="chat-hav" src="${otherAv}" alt="" style="cursor:pointer" onclick="openUserProfile(${otherId})">`
-    : `<div class="chat-hav-ph" style="cursor:pointer" onclick="openUserProfile(${otherId})">${(otherName||'?')[0]}</div>`;
+    ? `<img class="chat-hav" src="${otherAv}" alt="" style="cursor:pointer" onclick="if(${otherId})openUserProfile(${otherId})">`
+    : `<div class="chat-hav-ph" style="cursor:pointer" onclick="if(${otherId})openUserProfile(${otherId})">${(otherName||'?')[0]}</div>`;
 
   if (conv.product_img) {
     document.getElementById('chat-product-bar').style.display = 'flex';
@@ -1546,6 +1581,67 @@ function showTyping(name) {
 }
 function hideTyping() { document.getElementById('typing-bubble')?.remove(); }
 
+// ===== USER PROFILE =====
+async function openUserProfile(userId) {
+  if (!userId) return;
+  const r = await GET(`/api/users/${userId}`);
+  const u = r.user;
+  if (!u) return showToast('Utilisateur introuvable');
+
+  const avInner = document.getElementById('up-av-inner');
+  if (u.avatar_url) {
+    avInner.className = 'up-av-inner';
+    avInner.innerHTML = `<img src="${u.avatar_url}" alt="">`;
+  } else {
+    avInner.className = 'up-av-inner placeholder';
+    avInner.textContent = (u.display_name || u.username || '?')[0].toUpperCase();
+  }
+
+  document.getElementById('up-name').textContent = u.display_name || u.username;
+  document.getElementById('up-handle').textContent = '@' + u.username + ' · ' + (u.location || '');
+  document.getElementById('up-bio').textContent = u.bio || 'Aucune bio renseignée';
+
+  document.getElementById('up-stats').innerHTML = `
+    <div class="stat"><div class="stat-val">${u.products_count || 0}</div><div class="stat-lab">Articles</div></div>
+    <div class="stat"><div class="stat-val">${u.followers_count || 0}</div><div class="stat-lab">Abonnés</div></div>
+    <div class="stat"><div class="stat-val">${u.following_count || 0}</div><div class="stat-lab">Abonnements</div></div>
+    <div class="stat"><div class="stat-val">${u.sales_count || 0}</div><div class="stat-lab">Ventes</div></div>`;
+
+  const isMe = ME && ME.id == userId;
+  const actions = document.getElementById('up-actions');
+  if (isMe) {
+    actions.innerHTML = `<button onclick="navigateTo('profile')" class="up-follow-btn not-following">Mon profil</button>`;
+  } else {
+    const fs = await GET(`/api/users/${userId}/following-status`);
+    const isFollowing = fs.following;
+    actions.innerHTML = `
+      <button id="up-follow-btn" class="up-follow-btn ${isFollowing ? 'following' : 'not-following'}" onclick="toggleUserFollow(${userId})">${isFollowing ? 'Suivi ✓' : '+ Suivre'}</button>
+      <button class="up-msg-btn" onclick="openChat(${userId}, null);navigateTo('messages');loadConversations();">💬 Message</button>`;
+  }
+
+  const pr = await GET(`/api/products?seller_id=${userId}`);
+  const prods = pr.products || [];
+  document.getElementById('up-grid').innerHTML = prods.length
+    ? prods.map(p => productCardHTML(p)).join('')
+    : `<div style="grid-column:1/-1" class="empty-state"><div class="empty-state-title">Aucun article en vente</div></div>`;
+
+  navigateTo('user-profile');
+}
+
+async function toggleUserFollow(userId) {
+  const r = await POST(`/api/users/${userId}/follow`);
+  const btn = document.getElementById('up-follow-btn');
+  if (r.following) {
+    btn.textContent = 'Suivi ✓';
+    btn.className = 'up-follow-btn following';
+    showToast('✓ Vous suivez ce vendeur');
+  } else {
+    btn.textContent = '+ Suivre';
+    btn.className = 'up-follow-btn not-following';
+    showToast('Vous ne suivez plus ce vendeur');
+  }
+}
+
 // ===== PAYMENT MODAL (MANUAL) =====
 function openPaymentModal(product) {
   if (!product) return;
@@ -1579,7 +1675,14 @@ function openPaymentModal(product) {
       showToast('📸 Envoyez maintenant votre capture de paiement dans le chat');
       return;
     }
-    await openChat(product.seller_id, product.id);
+    // Chercher une conversation existante avant d'en créer une nouvelle
+    const r = await GET('/api/conversations');
+    const existing = (r.conversations || []).find(c => c.product_id == product.id && (c.buyer_id == ME.id || c.seller_id == ME.id));
+    if (existing) {
+      await openConversation(existing.id);
+    } else {
+      await openChat(product.seller_id, product.id);
+    }
     setTimeout(() => showToast('📸 Envoyez la capture de votre paiement ici !'), 600);
   };
   document.getElementById('payment-modal').classList.add('open');
@@ -1723,12 +1826,22 @@ async function markNotifsRead() {
 
 function handleNotifClick(notif) {
   closeNotifPanel();
-  if (notif.type === 'new_message' && notif.data?.conv_id) {
+  const d = notif.data || {};
+  if (notif.type === 'new_message' && d.conv_id) {
     navigateTo('messages'); loadConversations();
-    setTimeout(() => openConversation(parseInt(notif.data.conv_id)), 300);
-  } else if (notif.type === 'payment_received' && notif.data?.conv_id) {
+    setTimeout(() => openConversation(parseInt(d.conv_id)), 300);
+  } else if (notif.type === 'payment_received' && d.conv_id) {
     navigateTo('messages'); loadConversations();
-    setTimeout(() => openConversation(parseInt(notif.data.conv_id)), 300);
+    setTimeout(() => openConversation(parseInt(d.conv_id)), 300);
+  } else if (notif.type === 'payment_confirmed' && d.conv_id) {
+    navigateTo('messages'); loadConversations();
+    setTimeout(() => openConversation(parseInt(d.conv_id)), 300);
+  } else if (notif.type === 'new_follower' && d.follower_id) {
+    openUserProfile(d.follower_id);
+  } else if (notif.type === 'like' && d.product_id) {
+    openProduct(d.product_id);
+  } else if (notif.type === 'new_listing' && d.product_id) {
+    openProduct(d.product_id);
   }
 }
 
@@ -1788,10 +1901,28 @@ function openFromStory() { closeStory(); if (storiesData[activeStoryIdx]?.produc
 let storySwipeStartX = 0;
 function initStorySwipe() {
   const el = document.getElementById('story-content');
-  el.ontouchstart = e => { storySwipeStartX = e.touches[0].clientX; };
+  let startX = 0, startY = 0;
+
+  el.ontouchstart = e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  };
+
   el.ontouchend = e => {
-    const dx = e.changedTouches[0].clientX - storySwipeStartX;
-    if (Math.abs(dx) > 50) { dx < 0 ? nextStory() : prevStory(); }
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+      dx < 0 ? nextStory() : prevStory();
+    }
+  };
+
+  el.onclick = e => {
+    if (e.target.closest('.story-bottom-card')) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const width = rect.width;
+    if (x < width * 0.35) prevStory();
+    else if (x > width * 0.65) nextStory();
   };
 }
 
@@ -1807,7 +1938,7 @@ let pwaInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   pwaInstallPrompt = e;
-  if (ME) document.getElementById('pwa-banner').style.display = 'flex';
+  if (ME && pwaInstallPrompt) document.getElementById('pwa-banner').style.display = 'flex';
 });
 async function installPWA() {
   if (!pwaInstallPrompt) return;
